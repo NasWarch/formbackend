@@ -1,20 +1,61 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: formbackend-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: formbackend
+      POSTGRES_PASSWORD: formbackend
+      POSTGRES_DB: formbackend
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formbackend"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: formbackend-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
-    container_name: monetization-backend
+    container_name: formbackend-api
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8000:8000"
-    env_file:
-      - .env
+      - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:***@host.docker.internal:5432/monetization
-      - REDIS_URL=redis://host.docker.internal:6379/0
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      APP_NAME: FormBackend API
+      DEBUG: "false"
+      SECRET_KEY: change-me-to-a-random-secret-in-production
+      DATABASE_URL: postgresql://formbackend:formbackend@postgres:5432/formbackend
+      REDIS_URL: redis://redis:6379/0
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      RATE_LIMIT: 120/minute
+      CORS_ORIGINS: http://localhost:8000
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      TURNSTILE_SITE_KEY: 1x0000000000000000000000000000000AA
+      SPAM_SCORING_ENABLED: "true"
+      SPAM_SCORE_THRESHOLD: "5"
+      SPAM_RATE_LIMIT_WINDOW: "60"
+      SPAM_RATE_LIMIT_MAX: "10"
+      SPAM_IP_RATE_LIMIT: 60/minute
+      SPAM_FINGERPRINT_RATE_LIMIT: 30/minute
+      GOACCESS_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

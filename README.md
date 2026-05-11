@@ -23,41 +23,18 @@
 
 ## 🚀 Quick Start
 
-**1. Pull & run with Docker**
+**Deploy with one command:**
 
 ```bash
-docker run -d -p 8000:8000 \
-  -e DATABASE_URL=postgresql://user:pass@localhost:5432/formbackend \
-  -e REDIS_URL=redis://localhost:6379/0 \
-  -e JWT_SECRET=change-me-to-a-random-secret \
-  -e SMTP_HOST=your-smtp-host \
-  -e SMTP_USER=your-smtp-user \
-  -e SMTP_PASS=your-smtp-pass \
-  --name formbackend \
-  ghcr.io/naswarch/formbackend:latest
+git clone https://github.com/NasWarch/formbackend.git
+cd formbackend
+cp .env.example .env  # edit if you want custom secrets
+docker compose up -d
 ```
 
-**2. Create your first form**
+Open **http://localhost:8000**, sign up with your email (magic link — no password needed), create a form, and paste the endpoint URL into any HTML form.
 
-```bash
-# Open http://localhost:8000 in your browser
-# Sign up with your email (magic link — no password)
-# Click "Create form", name it "Contact"
-# Copy the endpoint URL
-```
-
-**3. Point your HTML form to it**
-
-```html
-<form action="http://localhost:8000/api/f/your-endpoint-slug" method="POST">
-  <input type="text" name="name" placeholder="Your name" required>
-  <input type="email" name="email" placeholder="Your email" required>
-  <textarea name="message" placeholder="Your message"></textarea>
-  <button type="submit">Send</button>
-</form>
-```
-
-**4. Done.** Submissions appear in your dashboard. Configure email/Slack/Discord notifications in settings.
+That's it. Submissions appear in your dashboard in real-time.
 
 ---
 
