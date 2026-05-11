@@ -42,3 +42,4 @@ logs/
 .venv/
 venv/
 env/
+copro-maintenance/
