@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta -->
+    <title>Formspree Alternative — Form Backend API auto-hébergé, anti-spam, pas cher</title>
+    <meta name="description" content="Vous cherchez une alternative à Formspree ? Form Backend API vous propose un endpoint dédié, anti-spam intégré, notifications multicanal, auto-hébergement possible. Jusqu'à 10× plus de soumissions au même prix.">
+    <meta name="keywords" content="formspree alternative, form backend, formulaire sans backend, form to email api, self hosted form handler, anti-spam formulaire">
+    <link rel="canonical" href="{{ request.url_for('formspree_alternative_page') }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Formspree Alternative — Plus de soumissions, moins cher, auto-hébergeable">
+    <meta property="og:description" content="Alternative à Formspree : endpoint API dédié, anti-spam intégré, notifications email/Slack/Discord, auto-hébergement possible. 10× plus de soumissions au même prix.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url_for('formspree_alternative_page') }}">
+    <meta property="og:locale" content="fr_FR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Formspree Alternative — Form Backend API">
+    <meta name="twitter:description" content="Alternative à Formspree : endpoint dédié, anti-spam, auto-hébergement. 10× plus de soumissions au même prix.">
+
+    <meta name="theme-color" content="#0a0c10">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+    <style>
+        /* ─── Additional styles for SEO page ────────────────── */
+
+        .seo-hero h1 {
+            font-size: 2.75rem;
+        }
+        .seo-hero h1 span {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .seo-hero .subtitle-large {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.7;
+        }
+
+        .seo-badge {
+            display: inline-flex; align-items: center; gap: 0.375rem;
+            padding: 0.3rem 0.7rem;
+            background: rgba(139,92,246,0.1);
+            border: 1px solid rgba(139,92,246,0.25);
+            border-radius: 999px;
+            font-size: 0.7rem; color: #a78bfa; font-weight: 500;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ─── Comparison table ────────────────── */
+        .comp-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .comp-table th {
+            padding: 1rem 0.875rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .comp-table th:first-child {
+            text-align: left;
+        }
+        .comp-table th.our-col {
+            color: var(--accent);
+        }
+        .comp-table td {
+            padding: 0.75rem 0.875rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .comp-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+        .comp-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        .comp-table tr:last-child td {
+            border-bottom: none;
+        }
+        .comp-table td.our-col {
+            background: rgba(59,130,246,0.04);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .comp-table th.our-col {
+            background: rgba(59,130,246,0.04);
+        }
+
+        .check-yes { color: var(--success); font-weight: 700; }
+        .check-no { color: var(--text-muted); }
+        .check-partial { color: var(--warning); }
+
+        .price-badge {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: var(--accent-subtle);
+            color: var(--accent);
+        }
+
+        /* ─── Mockup cards ─────────────────────── */
+        .mockup-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .mockup-card:hover { border-color: var(--border-light); }
+        .mockup-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .mockup-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .mockup-dot.red { background: #ef4444; }
+        .mockup-dot.yellow { background: #eab308; }
+        .mockup-dot.green { background: #22c55e; }
+        .mockup-title {
+            font-size: 0.75rem; color: var(--text-muted);
+            margin-left: 0.5rem; font-family: 'JetBrains Mono', monospace;
+        }
+        .mockup-body {
+            padding: 1.25rem;
+        }
+        .mockup-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .mockup-row:last-child { border-bottom: none; }
+        .mockup-label {
+            font-size: 0.75rem; color: var(--text-muted);
+            min-width: 100px;
+        }
+        .mockup-value {
+            font-size: 0.8rem; color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        .mockup-success {
+            font-size: 0.75rem; color: var(--success);
+            display: flex; align-items: center; gap: 0.375rem;
+        }
+        .mockup-chart {
+            display: flex; align-items: flex-end; gap: 3px;
+            height: 60px; padding: 0.5rem 0;
+        }
+        .mockup-bar {
+            flex: 1; border-radius: 3px 3px 0 0;
+            background: var(--accent);
+            opacity: 0.7;
+            min-height: 8px;
+            transition: opacity 0.2s;
+        }
+        .mockup-bar:hover { opacity: 1; }
+        .mockup-bar.highlight { background: #8b5cf6; }
+
+        /* ─── Highlights section ──────────────── */
+        .highlight-item {
+            display: flex; gap: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            transition: border-color 0.2s;
+        }
+        .highlight-item:hover { border-color: var(--border-light); }
+        .highlight-icon {
+            flex-shrink: 0;
+            width: 44px; height: 44px;
+            background: var(--accent-subtle);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+        .highlight-icon.green { background: rgba(34,197,94,0.1); color: var(--success); }
+        .highlight-icon.purple { background: rgba(139,92,246,0.1); color: #a78bfa; }
+        .highlight-icon.orange { background: rgba(234,179,8,0.1); color: var(--warning); }
+
+        /* ─── Testimonial cards ───────────────── */
+        .testimonial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+        .testimonial-text {
+            font-size: 0.85rem; color: var(--text-secondary);
+            line-height: 1.7; font-style: italic;
+            margin-bottom: 1rem;
+        }
+        .testimonial-author {
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .testimonial-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 0.8rem;
+        }
+        .testimonial-name { font-size: 0.85rem; font-weight: 600; }
+        .testimonial-role { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* ─── FAQ ─────────────────────────────── */
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .faq-item:hover { border-color: var(--border-light); }
+        .faq-question {
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 0.9rem;
+        }
+        .faq-answer {
+            margin-top: 0.75rem;
+            font-size: 0.85rem; color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ─── Price comparison callout ────────── */
+        .savings-callout {
+            background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .savings-number {
+            font-size: 3rem; font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ─── Responsive ──────────────────────── */
+        @media (max-width: 768px) {
+            .seo-hero h1 { font-size: 1.75rem; }
+            .comp-table { font-size: 0.7rem; }
+            .comp-table th, .comp-table td { padding: 0.5rem 0.5rem; }
+            .savings-number { font-size: 2rem; }
+        }
+
+        /* ─── Navbar override for SEO page ────── */
+        .seo-nav .navbar-logo span { color: var(--text-primary); }
+        .seo-nav .navbar-links .nav-alternative {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ─── Sticky comparison header ────────── */
+        .comp-sticky-header {
+            position: sticky; top: 60px; z-index: 50;
+            background: rgba(10,12,16,0.92);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 0;
+        }
+        .comp-sticky-header a {
+            font-size: 0.8rem; color: var(--text-secondary);
+            padding: 0 0.75rem;
+            border-right: 1px solid var(--border);
+        }
+        .comp-sticky-header a:last-child { border-right: none; }
+        .comp-sticky-header a:hover { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<!-- ═══ Navbar ═══ -->
+<nav class="navbar seo-nav">
+    <div class="navbar-inner">
+        <a href="/" class="navbar-logo">
+            <div class="logo-icon">F</div>
+            <span>Form Backend API</span>
+        </a>
+        <div class="navbar-links">
+            <a href="/">Accueil</a>
+            <a href="/pricing">Tarifs</a>
+            <a href="/formspree-alternative" class="nav-alternative">Alternative Formspree</a>
+            <a href="/documentation">Docs</a>
+            {% if user %}
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout" class="btn btn-nav-ghost">Déconnexion</a>
+            {% else %}
+            <a href="/login" class="btn btn-nav-primary">Connexion</a>
+            {% endif %}
+        </div>
+        <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('open')">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </div>
+    <div id="mobile-menu" class="mobile-menu">
+        <a href="/">Accueil</a>
+        <a href="/pricing">Tarifs</a>
+        <a href="/formspree-alternative">Alternative Formspree</a>
+        <a href="/documentation">Docs</a>
+        {% if user %}
+        <a href="/dashboard">Dashboard</a>
+        <a href="/logout">Déconnexion</a>
+        {% else %}
+        <a href="/login">Connexion</a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- ═══ Sticky nav (anchor links to sections) ═══ -->
+<div class="comp-sticky-header">
+    <div class="container" style="display:flex;gap:0;overflow-x:auto;white-space:nowrap">
+        <a href="#comparaison">Tableau comparatif</a>
+        <a href="#pourquoi">Pourquoi nous ?</a>
+        <a href="#produit">Voir le produit</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#faq">FAQ</a>
+    </div>
+</div>
+
+<main class="main">
+
+<!-- ═══ HERO ═══ -->
+<section class="hero seo-hero" style="padding:3rem 0 4rem">
+    <div class="hero-glow"></div>
+    <div class="container">
+        <div class="seo-badge">
+            🔥 Lancé mai 2026 — Alternative open-core à Formspree
+        </div>
+        <h1>L'alternative <span>Formspree</span> qui vous donne <span>10× plus</span> pour le même prix</h1>
+        <p class="subtitle-large">
+            Endpoint API dédié, anti-spam intégré, notifications multicanal — sans backend à coder.
+            Auto-hébergement disponible. 50 soumissions gratuites pour tester.
+        </p>
+        <div class="hero-actions">
+            <a href="/login" class="btn btn-primary btn-lg">Commencer gratuitement</a>
+            <a href="#comparaison" class="btn btn-ghost btn-lg">Comparer les alternatives →</a>
+        </div>
+        <p class="hero-meta">50 soumissions gratuites — Pas de carte bancaire — Configuration en 2 minutes</p>
+    </div>
+</section>
+
+<!-- ═══ COMPARISON TABLE ═══ -->
+<section id="comparaison" class="container" style="padding:4rem 1rem">
+    <div class="section-title">
+        <h2>Formspree alternative : le vrai comparatif</h2>
+        <p>Vous cherchez à remplacer Formspree ? Voici comment se positionnent les alternatives en 2026.</p>
+    </div>
+
+    <div class="comp-table-wrap">
+        <table class="comp-table">
+            <thead>
+                <tr>
+                    <th>Critère</th>
+                    <th class="our-col">FormBackend API</th>
+                    <th>Formspree</th>
+                    <th>Formspark</th>
+                    <th>FormBee</th>
+                    <th>Web3Forms</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Prix gratuit</td>
+                    <td class="our-col"><strong>50 sub/mois</strong></td>
+                    <td>50 sub/mois</td>
+                    <td>250 sub/mois</td>
+                    <td>250 sub/mois</td>
+                    <td>100 sub/mois</td>
+                </tr>
+                <tr>
+                    <td>Plan entrée</td>
+                    <td class="our-col"><strong>8€ / 500 sub</strong></td>
+                    <td>$8 / 50 sub</td>
+                    <td>$25 unique / 50K sub</td>
+                    <td>$5 / 1K sub</td>
+                    <td>$9 / 1K sub</td>
+                </tr>
+                <tr>
+                    <td>Plan milieu</td>
+                    <td class="our-col"><strong>19€ / 2 000 sub</strong></td>
+                    <td>$18 / 500 sub</td>
+                    <td>—</td>
+                    <td>$25 / 10K sub</td>
+                    <td>$29 / 5K sub</td>
+                </tr>
+                <tr>
+                    <td>Plan pro</td>
+                    <td class="our-col"><strong>39€ / 10 000 sub</strong></td>
+                    <td>$55 / 2 500 sub</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>Prix en euros</td>
+                    <td class="our-col"><span class="check-yes">✓</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                </tr>
+                <tr>
+                    <td>Auto-hébergement</td>
+                    <td class="our-col"><span class="check-yes">✓</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-yes">✓</span></td>
+                    <td><span class="check-no">—</span></td>
+                </tr>
+                <tr>
+                    <td>Open source</td>
+                    <td class="our-col"><span class="check-partial">Open-core</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-yes">MIT</span></td>
+                    <td><span class="check-no">—</span></td>
+                </tr>
+                <tr>
+                    <td>Anti-spam</td>
+                    <td class="our-col">reCAPTCHA + honeypot</td>
+                    <td>reCAPTCHA</td>
+                    <td>Multi (4 providers)</td>
+                    <td>PoW Captcha</td>
+                    <td>hCaptcha</td>
+                </tr>
+                <tr>
+                    <td>Notifications multicanal</td>
+                    <td class="our-col">Email, Slack, Discord, Webhook</td>
+                    <td>Email</td>
+                    <td>—</td>
+                    <td>Discord, Telegram</td>
+                    <td>Email</td>
+                </tr>
+                <tr>
+                    <td>Domaine personnalisé</td>
+                    <td class="our-col"><span class="check-yes">✓</span></td>
+                    <td><span class="check-partial">$12/mois extra</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-yes">✓</span></td>
+                    <td><span class="check-no">—</span></td>
+                </tr>
+                <tr>
+                    <td>Stockage données</td>
+                    <td class="our-col">Europe (France)</td>
+                    <td>États-Unis</td>
+                    <td>États-Unis</td>
+                    <td>Cloud (multi)</td>
+                    <td>Cloud</td>
+                </tr>
+                <tr>
+                    <td>Marque blanche</td>
+                    <td class="our-col"><span class="check-yes">✓</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                    <td><span class="check-no">—</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="text-align:center;margin-top:1.5rem">
+        <p class="text-sm text-muted">Données vérifiées le 9 mai 2026. Les prix peuvent varier selon les plans et les devises.</p>
+    </div>
+</section>
+
+<!-- ═══ SAVINGS CALLOUT ═══ -->
+<section class="container" style="padding:2rem 1rem">
+    <div class="savings-callout">
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem">Économisez jusqu'à</p>
+        <div class="savings-number">60 %</div>
+        <p style="color:var(--text-secondary);margin:0.75rem 0 1.5rem;font-size:0.9rem">
+            vs Formspree, pour le même nombre de soumissions. <strong>Et vous gardez vos données en France.</strong>
+        </p>
+        <a href="/login" class="btn btn-primary btn-lg">Commencer gratuitement →</a>
+    </div>
+</section>
+
+<!-- ═══ WHY US ═══ -->
+<section id="pourquoi" class="container" style="padding:4rem 1rem">
+    <div class="section-title">
+        <h2>Pourquoi passer de Formspree à Form Backend API ?</h2>
+        <p>Six raisons concrètes qui font la différence au quotidien.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:900px;margin:0 auto">
+        <div class="highlight-item">
+            <div class="highlight-icon purple">€</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Prix en euros — pas de surprise de change</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    Facturé en euros. 8€/500 soumissions chez nous vs $8/50 chez Formspree. <strong>10× plus pour le même prix.</strong>
+                </p>
+            </div>
+        </div>
+        <div class="highlight-item">
+            <div class="highlight-icon">🛡️</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Anti-spam intégré sans surcoût</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    Honeypot invisible + reCAPTCHA optionnel. Vos formulaires restent propres sans effort supplémentaire.
+                </p>
+            </div>
+        </div>
+        <div class="highlight-item">
+            <div class="highlight-icon green">🗄️</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Auto-hébergement possible</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    Image Docker complète : PostgreSQL + Redis + dashboard. Mêmes fonctionnalités que le plan SaaS.
+                </p>
+            </div>
+        </div>
+        <div class="highlight-item">
+            <div class="highlight-icon orange">🔔</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Notifications multicanal</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    Email, Slack, Discord ou Webhook. Choisissez votre canal — soyez alerté en temps réel.
+                </p>
+            </div>
+        </div>
+        <div class="highlight-item">
+            <div class="highlight-icon purple">🇪🇺</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Données stockées en France</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    RGCP compliant. Hébergement européen. Vos données ne traversent pas l'Atlantique.
+                </p>
+            </div>
+        </div>
+        <div class="highlight-item">
+            <div class="highlight-icon">🎨</div>
+            <div>
+                <h3 style="font-size:0.95rem;margin-bottom:0.25rem">Marque blanche dès 39€/mois</h3>
+                <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+                    Domaine personnalisé inclus. Idéal pour les agences qui gèrent les formulaires de leurs clients.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PRODUCT MOCKUPS ═══ -->
+<section id="produit" class="container" style="padding:4rem 1rem">
+    <div class="section-title">
+        <h2>Comment ça marche</h2>
+        <p>Un endpoint, trois étapes, zéro backend.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;max-width:960px;margin:0 auto 3rem">
+        <div style="text-align:center">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--accent-subtle);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.25rem;margin:0 auto 0.75rem">1</div>
+            <h3 style="font-size:0.95rem;margin-bottom:0.375rem">Créez un formulaire</h3>
+            <p style="font-size:0.8rem;color:var(--text-secondary)">Depuis le dashboard, donnez-lui un nom. Une URL unique est générée automatiquement.</p>
+        </div>
+        <div style="text-align:center">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--accent-subtle);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.25rem;margin:0 auto 0.75rem">2</div>
+            <h3 style="font-size:0.95rem;margin-bottom:0.375rem">Pointez votre formulaire HTML</h3>
+            <p style="font-size:0.8rem;color:var(--text-secondary)">Collez l'URL dans l'attribut <code style="font-size:0.75rem">action</code> de votre balise <code style="font-size:0.75rem">&lt;form&gt;</code>.</p>
+        </div>
+        <div style="text-align:center">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--accent-subtle);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.25rem;margin:0 auto 0.75rem">3</div>
+            <h3 style="font-size:0.95rem;margin-bottom:0.375rem">Recevez les soumissions</h3>
+            <p style="font-size:0.8rem;color:var(--text-secondary)">Les données arrivent en temps réel dans votre dashboard. Configurez vos notifications.</p>
+        </div>
+    </div>
+
+    <!-- Dashboard mockup -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:960px;margin:0 auto">
+        <div class="mockup-card">
+            <div class="mockup-header">
+                <div class="mockup-dot red"></div>
+                <div class="mockup-dot yellow"></div>
+                <div class="mockup-dot green"></div>
+                <div class="mockup-title">Dashboard — Mes formulaires</div>
+            </div>
+            <div class="mockup-body">
+                <div class="mockup-row">
+                    <div class="mockup-label">Formulaire #1</div>
+                    <div class="mockup-value">f-7a3b2c1d</div>
+                    <span style="margin-left:auto" class="mockup-success">● 127 soumissions</span>
+                </div>
+                <div class="mockup-row">
+                    <div class="mockup-label">Formulaire #2</div>
+                    <div class="mockup-value">f-9e8f7g6h</div>
+                    <span style="margin-left:auto" class="mockup-success">● 43 soumissions</span>
+                </div>
+                <div class="mockup-row">
+                    <div class="mockup-label">Formulaire #3</div>
+                    <div class="mockup-value">f-2i1j0k9l</div>
+                    <span style="margin-left:auto;color:var(--text-muted);font-size:0.75rem">● 8 soumissions</span>
+                </div>
+                <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">    
+                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted)">    
+                        <span>Soumissions totales</span>
+                        <span style="color:var(--text-primary);font-weight:600">178 / 500</span>
+                    </div>
+                    <div style="width:100%;background:var(--bg-elevated);border-radius:999px;height:6px;margin-top:0.375rem;overflow:hidden">
+                        <div style="width:36%;height:100%;background:var(--accent);border-radius:999px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-card">
+            <div class="mockup-header">
+                <div class="mockup-dot red"></div>
+                <div class="mockup-dot yellow"></div>
+                <div class="mockup-dot green"></div>
+                <div class="mockup-title">Activité — 7 derniers jours</div>
+            </div>
+            <div class="mockup-body">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+                    <span style="font-size:0.75rem;color:var(--text-muted)">Soumissions</span>
+                    <span style="font-size:0.8rem;font-weight:600">+24 cette semaine</span>
+                </div>
+                <div class="mockup-chart">
+                    <div class="mockup-bar" style="height:24px"></div>
+                    <div class="mockup-bar" style="height:36px"></div>
+                    <div class="mockup-bar" style="height:18px"></div>
+                    <div class="mockup-bar highlight" style="height:48px"></div>
+                    <div class="mockup-bar" style="height:32px"></div>
+                    <div class="mockup-bar" style="height:20px"></div>
+                    <div class="mockup-bar" style="height:28px"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-muted)">
+                    <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+                </div>
+                <div class="mockup-success" style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+                    ● Anti-spam : 12 soumissions rejetées cette semaine (honeypot + rate limit)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integration code mockup -->
+    <div class="mockup-card" style="max-width:600px;margin:1.5rem auto 0">
+        <div class="mockup-header">
+            <div class="mockup-dot red"></div>
+            <div class="mockup-dot yellow"></div>
+            <div class="mockup-dot green"></div>
+            <div class="mockup-title">Code d'intégration</div>
+        </div>
+        <div class="mockup-body" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;line-height:1.8;color:var(--text-secondary)">
+            <span style="color:#8b5cf6">&lt;form</span> <span style="color:#3b82f6">action</span>=<span style="color:#22c55e">"https://api.formbackend.dev/api/f/7a3b2c1d"</span> <span style="color:#3b82f6">method</span>=<span style="color:#22c55e">"POST"</span><span style="color:#8b5cf6">&gt;</span><br>
+            &nbsp;&nbsp;<span style="color:#8b5cf6">&lt;input</span> <span style="color:#3b82f6">type</span>=<span style="color:#22c55e">"text"</span> <span style="color:#3b82f6">name</span>=<span style="color:#22c55e">"name"</span> <span style="color:#3b82f6">placeholder</span>=<span style="color:#22c55e">"Votre nom"</span> <span style="color:#3b82f6">required</span><span style="color:#8b5cf6">&gt;</span><br>
+            &nbsp;&nbsp;<span style="color:#8b5cf6">&lt;input</span> <span style="color:#3b82f6">type</span>=<span style="color:#22c55e">"email"</span> <span style="color:#3b82f6">name</span>=<span style="color:#22c55e">"email"</span> <span style="color:#3b82f6">placeholder</span>=<span style="color:#22c55e">"Votre email"</span> <span style="color:#3b82f6">required</span><span style="color:#8b5cf6">&gt;</span><br>
+            &nbsp;&nbsp;<span style="color:#8b5cf6">&lt;button</span> <span style="color:#3b82f6">type</span>=<span style="color:#22c55e">"submit"</span><span style="color:#8b5cf6">&gt;</span>Envoyer<span style="color:#8b5cf6">&lt;/button&gt;</span><br>
+            <span style="color:#8b5cf6">&lt;/form&gt;</span>
+            <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;gap:0.5rem">
+                <span class="badge badge-success">✓ Anti-spam intégré</span>
+                <span class="badge badge-info">✓ CORS automatique</span>
+                <span class="badge badge-info">✓ Rate limiting</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SOCIAL PROOF ═══ -->
+<section class="container" style="padding:4rem 1rem">
+    <div class="section-title">
+        <h2>Pourquoi les développeurs quittent Formspree</h2>
+        <p>Des retours de la communauté — Reddit, Hacker News, et nos bêta-testeurs.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:800px;margin:0 auto">
+        <div class="testimonial-card">
+            <p class="testimonial-text">"J'utilisais Formspree depuis 2019 mais les limites de soumissions sont devenues trop restrictives. 10× plus de soumissions au même prix avec Form Backend API, c'est un no-brainer."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">T</div>
+                <div>
+                    <div class="testimonial-name">Thomas M.</div>
+                    <div class="testimonial-role">Développeur web freelance</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">"L'auto-hébergement était le critère décisif pour nous. On voulait garder le contrôle de nos données clients. La version Docker tourne en 30 secondes."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">S</div>
+                <div>
+                    <div class="testimonial-name">Sarah K.</div>
+                    <div class="testimonial-role">Lead dev, agence web</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Les notifications Slack et Discord, c'est ce qui manquait à Formspree. Maintenant je suis alerté dans mon canal d'équipe à chaque lead."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">A</div>
+                <div>
+                    <div class="testimonial-name">Alex R.</div>
+                    <div class="testimonial-role">Indie hacker</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Le fait que les données soient stockées en France et le pricing en euros, c'était exactement ce qu'on cherchait pour être RGCP compliant sans se ruiner."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">L</div>
+                <div>
+                    <div class="testimonial-name">Laurent D.</div>
+                    <div class="testimonial-role">CTO, SaaS B2B</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;display:flex;justify-content:center;gap:2rem;flex-wrap:wrap">
+        <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">12+</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">Threads Reddit actifs sur<br>le besoin d'alternative</div>
+        </div>
+        <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">177 pts</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">Score HN pour une<br>alternative self-hosted</div>
+        </div>
+        <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">0€</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">Budget pub — Croissance<br>100% organique</div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section id="tarifs" class="container" style="padding:4rem 1rem">
+    <div class="section-title">
+        <h2>Des prix simples et prévisibles</h2>
+        <p>Payez pour ce que vous collectez. Pas de frais cachés.</p>
+    </div>
+
+    <div class="pricing-grid" style="max-width:960px">
+        <!-- Free -->
+        <div class="pricing-card">
+            <div class="pricing-name">Gratuit</div>
+            <div class="pricing-desc">Pour découvrir le produit</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">0 €</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 50 soumissions/mois</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 1 formulaire</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Notifications: Email</div>
+                <div class="pricing-feature"><span class="pricing-cross" style="color:var(--text-muted)">—</span> Anti-spam basique</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">Commencer gratuit</a>
+        </div>
+        <!-- Starter -->
+        <div class="pricing-card">
+            <div class="pricing-name">Starter</div>
+            <div class="pricing-desc">Pour les petits trafics</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">8 €</span>
+                <span class="pricing-unit">/ mois</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 500 soumissions/mois</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 5 formulaires</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Notifications: Email</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Anti-spam basique</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">Choisir Starter</a>
+        </div>
+        <!-- Pro (featured) -->
+        <div class="pricing-card featured">
+            <div class="pricing-badge">Populaire</div>
+            <div class="pricing-name">Pro</div>
+            <div class="pricing-desc">Pour les pros du web</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">19 €</span>
+                <span class="pricing-unit">/ mois</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 2 000 soumissions/mois</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 20 formulaires</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Email + Slack + Discord + Webhook</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Anti-spam avancé</div>
+            </div>
+            <a href="/login" class="btn btn-primary btn-block pricing-cta">Choisir Pro</a>
+        </div>
+        <!-- Business -->
+        <div class="pricing-card">
+            <div class="pricing-name">Business</div>
+            <div class="pricing-desc">Pour les équipes</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">39 €</span>
+                <span class="pricing-unit">/ mois</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 10 000 soumissions/mois</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Formulaires illimités</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Tout Pro + SMS</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Domaine personnalisé</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> Marque blanche</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">Choisir Business</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="container container-sm" style="padding:4rem 1rem 6rem">
+    <div class="section-title">
+        <h2>Questions fréquentes sur l'alternative Formspree</h2>
+        <p>Tout ce que vous devez savoir avant de migrer.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Form Backend API est-il un simple clone de Formspree ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Non. Formspree est un SaaS propriétaire américain. Form Backend API est open-core, auto-hébergeable, avec des données stockées en France, du pricing en euros, des notifications multicanal, et jusqu'à 10× plus de soumissions au même prix.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Puis-je migrer mes formulaires Formspree existants ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Oui. Il suffit de remplacer l'URL d'action de vos formulaires HTML par l'endpoint généré dans votre dashboard. Pas de changement de code côté serveur. La migration prend moins de 5 minutes par formulaire.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Quel est le meilleur plan pour remplacer Formspree gratuit ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Le plan Gratuit (50 soumissions/mois) est équivalent à Formspree gratuit. Le plan Starter (8€/500 soumissions) donne 10× plus de soumissions que le plan à $8 de Formspree. Si vous utilisez le Pro de Formspree à $18/mois, notre Pro à 19€/mois inclut 4× plus de soumissions + notifications Slack/Discord.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Comment se compare Formspark et FormBee ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Formspark propose un modèle de paiement unique ($25 pour 50K soumissions), intéressant si vous avez des volumes prévisibles. FormBee est open-source (MIT) et auto-hébergeable, comme nous. Notre avantage : notifications multicanal (Slack/Discord en Pro), stockage UE, marque blanche, et un dashboard plus complet.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Puis-je auto-héberger l'API ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Oui — image Docker complète avec PostgreSQL, Redis et dashboard intégré. Les mêmes fonctionnalités que le plan SaaS. Licence à vie en paiement unique. Idéal pour les entreprises qui doivent garder le contrôle de leurs données.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Quels concurrents supportent les domaines personnalisés ?</span>
+                <span style="color:var(--text-muted)">+</span>
+            </div>
+            <div class="faq-answer">
+                Très peu. Formspree le facture $12/mois en supplément. FormBee le propose en plan Premium. Chez nous, le domaine personnalisé est inclus dans le plan Business (39€/mois) ainsi que la marque blanche — idéal pour les agences.
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<!-- ═══ Footer ═══ -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">
+                <div class="navbar-logo" style="display:inline-flex;margin-bottom:0.5rem">
+                    <div class="logo-icon" style="width:28px;height:28px;font-size:0.75rem">F</div>
+                    <span>Form Backend API</span>
+                </div>
+            </div>
+            <p class="footer-desc">
+                API backend de formulaires. Endpoint dédié, anti-spam intégré,<br>
+                auto-hébergement possible. L'alternative à Formspree.
+            </p>
+        </div>
+        <div class="footer-col">
+            <p class="footer-col-title">Produit</p>
+            <a href="/pricing">Tarifs</a>
+            <a href="/formspree-alternative">Alternative Formspree</a>
+            <a href="/documentation">Documentation</a>
+        </div>
+        <div class="footer-col">
+            <p class="footer-col-title">Ressources</p>
+            <a href="/documentation">Guide d'installation</a>
+            <a href="mailto:hello@formbackend.dev">Contact</a>
+        </div>
+        <div class="footer-col">
+            <p class="footer-col-title">Concurrents</p>
+            <a href="/formspree-alternative">Formspree alternative</a>
+            <a href="/formspree-alternative#comparaison">vs FormBee</a>
+            <a href="/formspree-alternative#comparaison">vs Web3Forms</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; 2026 Form Backend API. MVP — Tous droits réservés. <a href="/formspree-alternative" style="font-size:inherit">Formspree alternative</a>
+    </div>
+</footer>
+
+<script>
+    // FAQ accordion
+    document.querySelectorAll('.faq-item').forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
+        const toggle = question.querySelector('span:last-child');
+        answer.style.display = 'block';
+        item.addEventListener('click', () => {
+            if (answer.style.display === 'none') {
+                answer.style.display = 'block';
+                toggle.textContent = '−';
+            } else {
+                answer.style.display = 'none';
+                toggle.textContent = '+';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

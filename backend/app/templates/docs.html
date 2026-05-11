@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Documentation — Monito{% endblock %}
+
+{% block content %}
+<div class="container container-sm" style="padding: 3rem 1rem 5rem">
+
+    <div class="section-title">
+        <h1>Documentation</h1>
+        <p>Configurez Monito en 5 minutes.</p>
+    </div>
+
+    <!-- Quickstart -->
+    <div class="card card-accent" style="margin-bottom:2rem">
+        <h2 style="font-size:1.25rem;margin-bottom:0.75rem">Démarrage rapide</h2>
+        <ol style="color:var(--text-secondary);font-size:0.875rem;display:flex;flex-direction:column;gap:0.75rem;padding-left:1.25rem">
+            <li>Créez un compte gratuit — pas de carte bancaire</li>
+            <li>Depuis le dashboard, cliquez sur <strong>"+ Nouveau monitor"</strong></li>
+            <li>Entrez l'URL de votre serveur et choisissez le type de check</li>
+            <li>Configurez vos notifications (email, Slack, Telegram)</li>
+            <li>Et c'est tout ! Les alertes arrivent automatiquement en cas de panne.</li>
+        </ol>
+    </div>
+
+    <!-- Monitor Types -->
+    <h2 style="font-size:1.25rem;margin-bottom:1rem">Types de checks</h2>
+    <div class="grid" style="gap:0.75rem;margin-bottom:2rem">
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">HTTP/HTTPS</span>
+                <div>
+                    <strong style="font-size:0.9rem">Check HTTP</strong>
+                    <p style="font-size:0.8rem;color:var(--text-secondary)">Vérifie le code HTTP, le temps de réponse, les redirections. Configurez un timeout et des mots-clés attendus.</p>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-success">PING</span>
+                <div>
+                    <strong style="font-size:0.9rem">Ping ICMP</strong>
+                    <p style="font-size:0.8rem;color:var(--text-secondary)">Mesure la latence et la perte de paquets. Idéal pour vérifier qu'un serveur est joignable sur le réseau.</p>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-warning">TCP</span>
+                <div>
+                    <strong style="font-size:0.9rem">Port TCP</strong>
+                    <p style="font-size:0.8rem;color:var(--text-secondary)">Vérifie qu'un port spécifique est ouvert et accepte les connexions. Parfait pour SSH (22), MySQL (3306), etc.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <h2 style="font-size:1.25rem;margin-bottom:1rem">Notifications</h2>
+    <div class="grid" style="gap:0.75rem;margin-bottom:2rem">
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">Email</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary)">Notifications par email SMTP. Configurable depuis le dashboard.</span>
+            </div>
+        </div>
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">Slack</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary)">Webhook Slack — recevez les alertes dans votre canal #incidents.</span>
+            </div>
+        </div>
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">Telegram</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary)">Bot Telegram privé ou groupe. Configuration via token bot.</span>
+            </div>
+        </div>
+        <div class="card" style="padding:1rem">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">Webhook</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary)">Endpoint HTTP personnalisé. Format JSON documenté ci-dessous.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <h2 id="api" style="font-size:1.25rem;margin-bottom:1rem">Référence API</h2>
+
+    <div class="card" style="margin-bottom:1rem">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-success">GET</span>
+            <code class="font-mono text-sm">/api/monitors</code>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">Liste tous vos moniteurs avec leur statut actuel. Authentification requise.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-success">GET</span>
+            <code class="font-mono text-sm">/api/monitors/{id}</code>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">Détail d'un moniteur : historique uptime, incidents, temps de réponse.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-info">POST</span>
+            <code class="font-mono text-sm">/api/monitors</code>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">Crée un nouveau moniteur. Body : name, type (http|ping|port), target, interval, timeout.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:2rem">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-warning">DELETE</span>
+            <code class="font-mono text-sm">/api/monitors/{id}</code>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">Supprime un moniteur et son historique.</p>
+    </div>
+
+    <!-- Webhook payload -->
+    <h2 style="font-size:1.25rem;margin-bottom:1rem">Payload Webhook</h2>
+    <div class="card" style="margin-bottom:2rem">
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.75rem">Lorsqu'un incident est détecté ou résolu, nous envoyons un POST à votre webhook :</p>
+        <pre style="background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;font-size:0.75rem;font-family:monospace;color:var(--text-secondary);overflow-x:auto"><code>{
+  "event": "incident.opened" | "incident.resolved",
+  "monitor": {
+    "id": "m_a1b2c3d4",
+    "name": "Serveur production",
+    "type": "http",
+    "target": "https://example.com"
+  },
+  "incident": {
+    "id": "inc_xyz",
+    "started_at": "2026-05-07T10:30:00Z",
+    "resolved_at": null,
+    "duration_seconds": null,
+    "status_code": 503,
+    "error": "HTTP 503 Service Unavailable"
+  }
+}</code></pre>
+    </div>
+
+    <!-- Docker deploy -->
+    <h2 style="font-size:1.25rem;margin-bottom:1rem">Déploiement Docker (Self-Hosted)</h2>
+    <div class="card card-accent" style="margin-bottom:2rem">
+        <pre style="background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;font-size:0.8rem;font-family:monospace;color:var(--text-secondary);overflow-x:auto"><code># docker-compose.yml
+version: '3.8'
+services:
+  app:
+    image: monito/app:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://...
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine</code></pre>
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.75rem">
+            Documentation complète Docker disponible sur notre dépôt GitHub.
+        </p>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;padding:2rem 0">
+        <a href="/login" class="btn btn-primary btn-lg">Commencer gratuitement</a>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem">3 monitors gratuits — Pas de carte bancaire</p>
+    </div>
+</div>
+{% endblock %}

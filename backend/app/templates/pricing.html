@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Tarifs — Form Backend API{% endblock %}
+
+{% block content %}
+<section class="container" style="padding: 4rem 1rem 6rem">
+    <div class="section-title">
+        <h1 style="font-size:2.5rem">Des prix simples et prévisibles</h1>
+        <p>Payez pour ce que vous collectez. Pas de frais cachés, pas de surprise en fin de mois.</p>
+    </div>
+
+    <div class="pricing-grid">
+        {% for p in plans %}
+        <div class="pricing-card {% if p.highlight %}featured{% endif %}">
+            {% if p.highlight %}
+            <div class="pricing-badge">Populaire</div>
+            {% endif %}
+            <div class="pricing-name">{{ p.name }}</div>
+            <div class="pricing-desc">{{ p.desc }}</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">
+                    {% if p.price == 0 %}
+                    Gratuit
+                    {% else %}
+                    {{ "%.0f"|format(p.price) if p.price == p.price|int else "%.2f"|format(p.price) }} €
+                    {% endif %}
+                </span>
+                {% if p.price > 0 %}
+                <span class="pricing-unit">/ mois</span>
+                {% endif %}
+            </div>
+            <div class="pricing-features">
+                {% for feat in p.features %}
+                <div class="pricing-feature">
+                    {% if feat.included %}
+                    <span class="pricing-check">✓</span>
+                    {% else %}
+                    <span class="pricing-cross">—</span>
+                    {% endif %}
+                    {{ feat.label }}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="pricing-cta">
+                {% if p.price == 0 %}
+                <a href="/login" class="btn btn-ghost btn-block" style="justify-content:center">Commencer gratuit</a>
+                {% elif p.slug == "pro" %}
+                <a href="/login" class="btn btn-primary btn-block" style="justify-content:center">Choisir {{ p.name }}</a>
+                {% else %}
+                <a href="/login" class="btn btn-ghost btn-block" style="justify-content:center">Choisir {{ p.name }}</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Self-hosted note -->
+    <div class="card" style="max-width:720px;margin:3rem auto 0;text-align:center;padding:2rem">
+        <h3 style="margin-bottom:0.5rem">Vous préférez auto-héberger ?</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem">
+            Version Docker complète, mêmes fonctionnalités que Pro + base de données locale.
+            Licence à définir — contactez-nous.
+        </p>
+        <a href="mailto:hello@monito.dev" class="btn btn-ghost" style="display:inline-flex">Nous contacter</a>
+    </div>
+
+    <!-- Feature comparison table -->
+    <div style="margin-top:5rem">
+        <div class="section-title">
+            <h2>Comparaison détaillée</h2>
+            <p>Tout ce qui est inclus dans chaque plan.</p>
+        </div>
+        <div class="table-wrap" style="max-width:800px;margin:0 auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fonctionnalité</th>
+                        <th style="text-align:center">Free</th>
+                        <th style="text-align:center">Starter</th>
+                        <th style="text-align:center;color:var(--accent)">Pro</th>
+                        <th style="text-align:center">Scale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Soumissions / mois</td>
+                        <td style="text-align:center">50</td>
+                        <td style="text-align:center">500</td>
+                        <td style="text-align:center;font-weight:600;color:var(--text-primary)">3 000</td>
+                        <td style="text-align:center">15 000</td>
+                    </tr>
+                    <tr>
+                        <td>Formulaires</td>
+                        <td style="text-align:center">1</td>
+                        <td style="text-align:center">5</td>
+                        <td style="text-align:center;font-weight:600;color:var(--text-primary)">Illimités</td>
+                        <td style="text-align:center">Illimités</td>
+                    </tr>
+                    <tr>
+                        <td>Endpoint API</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Notifications email</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Filtrage anti-spam</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Webhooks</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>CORS personnalisé</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Upload de fichiers</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Export CSV</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Templates email</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Domaine personnalisé</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Accès API complet</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--text-muted)">—</td>
+                        <td style="text-align:center;color:var(--success)">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Support</td>
+                        <td style="text-align:center">Email</td>
+                        <td style="text-align:center">Email</td>
+                        <td style="text-align:center;font-weight:600;color:var(--text-primary)">Prioritaire</td>
+                        <td style="text-align:center">Dédié</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div style="margin-top:5rem;max-width:640px;margin-left:auto;margin-right:auto">
+        <div class="section-title">
+            <h2>Questions fréquentes</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+            <div class="card" style="padding:1.25rem">
+                <h4 style="margin-bottom:0.375rem;font-size:0.95rem">Puis-je passer d'un plan à un autre ?</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary)">Oui, à tout moment. Le changement est immédiat et vous êtes facturé au prorata. Vos formulaires et soumissions sont conservés.</p>
+            </div>
+            <div class="card" style="padding:1.25rem">
+                <h4 style="margin-bottom:0.375rem;font-size:0.95rem">Que se passe-t-il si j'atteins ma limite de soumissions ?</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary)">Vos formulaires restent accessibles mais les nouvelles soumissions sont bloquées jusqu'à la période suivante ou un changement de plan. Vous pouvez passer au plan supérieur à tout moment.</p>
+            </div>
+            <div class="card" style="padding:1.25rem">
+                <h4 style="margin-bottom:0.375rem;font-size:0.95rem">Puis-je annuler à tout moment ?</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary)">Oui. Pas d'engagement, pas de frais de résiliation. Vous conservez l'accès à vos données jusqu'à la fin de la période facturée.</p>
+            </div>
+            <div class="card" style="padding:1.25rem">
+                <h4 style="margin-bottom:0.375rem;font-size:0.95rem">Où sont stockées mes données ?</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary)">Vos données sont stockées en Europe (France). Nous ne revendons ni n'exploitons vos données. Consultez notre politique de confidentialité pour plus de détails.</p>
+            </div>
+            <div class="card" style="padding:1.25rem">
+                <h4 style="margin-bottom:0.375rem;font-size:0.95rem">La version self-hosted est-elle disponible ?</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary)">Oui — image Docker complète avec PostgreSQL, Redis et un dashboard intégré. Licence à vie en paiement unique. Contactez-nous pour les tarifs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enterprise CTA -->
+    <div style="text-align:center;margin-top:4rem;padding:2rem;border-top:1px solid var(--border)">
+        <h3 style="margin-bottom:0.5rem">Vous collectez plus de 15 000 soumissions / mois ?</h3>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem">
+            Plan Enterprise sur mesure avec soumissions illimitées, SLA, SSO et support dédié.
+        </p>
+        <a href="mailto:hello@monito.dev" class="btn btn-primary">Contactez-nous</a>
+    </div>
+</section>
+{% endblock %}

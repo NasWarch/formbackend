@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Form Backend API — API de formulaires sans backend{% endblock %}
+
+{% block extra_head %}
+{% set lang = request.query_params.get('lang', '') %}
+{% if lang not in ['fr', 'en'] %}
+  {% set accept = request.headers.get('accept-language', 'fr') %}
+  {% set lang = 'fr' if accept and accept.split(',')[0].startswith('fr') else 'en' %}
+{% endif %}
+
+{% set _ = {
+  'nav_home': {'fr': 'Accueil', 'en': 'Home'},
+  'nav_pricing': {'fr': 'Tarifs', 'en': 'Pricing'},
+  'nav_docs': {'fr': 'Docs', 'en': 'Docs'},
+  'nav_login': {'fr': 'Connexion', 'en': 'Log in'},
+  'nav_dashboard': {'fr': 'Dashboard', 'en': 'Dashboard'},
+  'nav_logout': {'fr': 'Déconnexion', 'en': 'Log out'},
+
+  'hero_badge': {'fr': 'Lancé en mai 2026', 'en': 'Launched May 2026'},
+  'hero_title': {'fr': 'API de formulaires.<br/>Sans backend. Sans effort.', 'en': 'Form backend API.<br/>No backend. No effort.'},
+  'hero_subtitle': {'fr': 'Recevez les soumissions de vos formulaires HTML directement dans votre dashboard. Endpoint API dédié, anti-spam intégré, notifications en temps réel.', 'en': 'Receive HTML form submissions straight to your dashboard. Dedicated API endpoint, built-in anti-spam, real-time notifications.'},
+  'hero_cta_primary': {'fr': 'Commencer gratuitement', 'en': 'Get started free'},
+  'hero_cta_secondary': {'fr': 'Voir les tarifs', 'en': 'See pricing'},
+  'hero_meta': {'fr': '50 soumissions gratuites — Pas de carte bancaire — 2 minutes chrono', 'en': '50 free submissions — No credit card — Set up in 2 minutes'},
+
+  'features_title': {'fr': 'Pourquoi Form Backend API ?', 'en': 'Why Form Backend API ?'},
+  'features_subtitle': {'fr': 'Un backend de formulaires prêt à l\'emploi. Collez une URL, recevez des données.', 'en': 'A production-ready form backend. Paste an URL, receive data.'},
+
+  'f1_title': {'fr': 'Endpoint API unique', 'en': 'Dedicated API endpoint'},
+  'f1_desc': {'fr': 'Chaque formulaire reçoit une URL unique. Pointez votre balise <code>&lt;form&gt;</code> et les soumissions arrivent automatiquement.', 'en': 'Every form gets its own URL. Point your <code>&lt;form&gt;</code> tag and submissions start flowing.'},
+  'f2_title': {'fr': 'Anti-spam intégré', 'en': 'Built-in anti-spam'},
+  'f2_desc': {'fr': 'Honeypot invisible, reCAPTCHA optionnel et rate limiting. Vos soumissions restent propres sans effort.', 'en': 'Invisible honeypot, optional reCAPTCHA, and rate limiting. Keep submissions clean with zero effort.'},
+  'f3_title': {'fr': 'Notifications multicanal', 'en': 'Multi-channel notifications'},
+  'f3_desc': {'fr': 'Email, Slack, Discord ou Webhook. Soyez alerté en temps réel à chaque soumission, sur le canal de votre choix.', 'en': 'Email, Slack, Discord or Webhook. Get real-time alerts on every submission, on your channel of choice.'},
+  'f4_title': {'fr': 'Dashboard en direct', 'en': 'Live dashboard'},
+  'f4_desc': {'fr': 'Visualisez, filtrez et exportez vos soumissions depuis un dashboard temps réel. Historique complet avec recherche.', 'en': 'View, filter and export your submissions from a real-time dashboard. Full history with search.'},
+  'f5_title': {'fr': 'Sécurité & CORS', 'en': 'Security & CORS'},
+  'f5_desc': {'fr': 'Rate limiting intégré, CORS personnalisable, validation côté serveur. Vos données sont stockées en Europe (France).', 'en': 'Built-in rate limiting, custom CORS, server-side validation. Your data is stored in Europe (France).'},
+  'f6_title': {'fr': 'Export & intégration', 'en': 'Export & integration'},
+  'f6_desc': {'fr': 'Exportez en CSV ou JSON. Code d\'intégration prêt à copier-coller. Compatible avec vos landing pages statiques.', 'en': 'Export to CSV or JSON. Ready-to-use embed code. Works with any static landing page.'},
+
+  'how_title': {'fr': 'Comment ça marche', 'en': 'How it works'},
+  'how_subtitle': {'fr': 'Trois étapes pour recevoir vos premières soumissions.', 'en': 'Three steps to your first submission.'},
+  'step1_title': {'fr': 'Créez un formulaire', 'en': 'Create a form'},
+  'step1_desc': {'fr': 'Depuis le dashboard, donnez un nom à votre formulaire. Une URL d\'endpoint unique est générée automatiquement.', 'en': 'From the dashboard, name your form. A unique endpoint URL is generated automatically.'},
+  'step2_title': {'fr': 'Pointez votre HTML', 'en': 'Point your HTML'},
+  'step2_desc': {'fr': 'Dans votre site existant, copiez l\'URL d\'endpoint dans l\'attribut action de votre balise <code>&lt;form&gt;</code>.', 'en': 'On your existing site, paste the endpoint URL into your <code>&lt;form&gt;</code> action attribute.'},
+  'step3_title': {'fr': 'Recevez les données', 'en': 'Receive submissions'},
+  'step3_desc': {'fr': 'Les soumissions arrivent en temps réel dans votre dashboard. Configurez des notifications pour être alerté.', 'en': 'Submissions appear in real-time on your dashboard. Set up notifications to get alerted.'},
+
+  'pricing_title': {'fr': 'Des prix simples et prévisibles', 'en': 'Simple, predictable pricing'},
+  'pricing_subtitle': {'fr': 'Payez pour ce que vous collectez. Pas de frais cachés, pas de surprise en fin de mois.', 'en': 'Pay for what you collect. No hidden fees, no surprises.'},
+  'pricing_popular': {'fr': 'Populaire', 'en': 'Most popular'},
+  'pricing_free': {'fr': 'Gratuit', 'en': 'Free'},
+  'pricing_free_desc': {'fr': 'Pour découvrir le produit', 'en': 'Try the product'},
+  'pricing_starter': {'fr': 'Starter', 'en': 'Starter'},
+  'pricing_starter_desc': {'fr': 'Pour les petits trafics', 'en': 'For small traffic'},
+  'pricing_pro': {'fr': 'Pro', 'en': 'Pro'},
+  'pricing_pro_desc': {'fr': 'Pour les pros du web', 'en': 'For web professionals'},
+  'pricing_business': {'fr': 'Business', 'en': 'Business'},
+  'pricing_business_desc': {'fr': 'Pour les équipes', 'en': 'For teams'},
+  'pricing_month': {'fr': '/ mois', 'en': '/ month'},
+  'pricing_feat_sub': {'fr': 'soumissions/mois', 'en': 'submissions/month'},
+  'pricing_feat_forms': {'fr': 'formulaire', 'en': 'form'},
+  'pricing_feat_forms_plural': {'fr': 'formulaires', 'en': 'forms'},
+  'pricing_feat_unlimited': {'fr': 'Illimité', 'en': 'Unlimited'},
+  'pricing_feat_notif': {'fr': 'Notifications', 'en': 'Notifications'},
+  'pricing_feat_notif_email': {'fr': 'Email', 'en': 'Email'},
+  'pricing_feat_notif_multi': {'fr': 'Email + Slack + Discord + Webhook', 'en': 'Email + Slack + Discord + Webhook'},
+  'pricing_feat_notif_all': {'fr': 'Tout Pro + SMS', 'en': 'Everything in Pro + SMS'},
+  'pricing_feat_spam': {'fr': 'Anti-spam basique', 'en': 'Basic anti-spam'},
+  'pricing_feat_spam_pro': {'fr': 'Anti-spam avancé', 'en': 'Advanced anti-spam'},
+  'pricing_feat_domain': {'fr': 'Domaine personnalisé', 'en': 'Custom domain'},
+  'pricing_feat_export': {'fr': 'Export CSV/JSON', 'en': 'CSV/JSON export'},
+  'pricing_feat_team': {'fr': 'Équipe (jusqu\'à 5)', 'en': 'Team (up to 5)'},
+  'pricing_feat_white': {'fr': 'Marque blanche', 'en': 'White label'},
+  'pricing_cta_free': {'fr': 'Commencer gratuit', 'en': 'Start free'},
+  'pricing_cta_starter': {'fr': 'Choisir Starter', 'en': 'Choose Starter'},
+  'pricing_cta_pro': {'fr': 'Choisir Pro', 'en': 'Choose Pro'},
+  'pricing_cta_business': {'fr': 'Choisir Business', 'en': 'Choose Business'},
+  'pricing_all_link': {'fr': 'Comparaison détaillée des plans →', 'en': 'Full plan comparison →'},
+
+  'cta_title': {'fr': 'Prêt à collecter des soumissions ?', 'en': 'Ready to collect submissions?'},
+  'cta_desc': {'fr': '50 soumissions gratuites. Aucune carte bancaire. Configuration en 2 minutes top chrono.', 'en': '50 free submissions. No credit card. Set up in 2 minutes flat.'},
+  'cta_primary': {'fr': 'Créer mon compte gratuit', 'en': 'Create my free account'},
+  'cta_secondary': {'fr': 'Comparer les offres', 'en': 'Compare plans'},
+
+  'lang_toggle': {'fr': 'English', 'en': 'Français'},
+} %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="hero" style="padding: 5rem 0 6rem;">
+    <div class="hero-glow"></div>
+    <div class="container">
+        <div class="hero-badge">
+            <span class="status-dot status-up" style="width:6px;height:6px"></span>
+            {{ _['hero_badge'][lang] }}
+        </div>
+        <h1>{{ _['hero_title'][lang]|safe }}</h1>
+        <p>{{ _['hero_subtitle'][lang] }}</p>
+        <div class="hero-actions">
+            <a href="/login" class="btn btn-primary btn-lg">{{ _['hero_cta_primary'][lang] }}</a>
+            <a href="/pricing" class="btn btn-ghost btn-lg">{{ _['hero_cta_secondary'][lang] }}</a>
+        </div>
+        <p class="hero-meta">{{ _['hero_meta'][lang] }}</p>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="container" style="padding: 4rem 1rem">
+    <div class="section-title">
+        <h2>{{ _['how_title'][lang] }}</h2>
+        <p>{{ _['how_subtitle'][lang] }}</p>
+    </div>
+    <div class="grid grid-3" style="max-width:900px;margin:0 auto">
+        <div class="feature-card" style="text-align:center">
+            <div class="feature-icon" style="margin:0 auto 1rem">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                </svg>
+            </div>
+            <h3>1. {{ _['step1_title'][lang] }}</h3>
+            <p>{{ _['step1_desc'][lang]|safe }}</p>
+        </div>
+        <div class="feature-card" style="text-align:center">
+            <div class="feature-icon" style="margin:0 auto 1rem">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+            </div>
+            <h3>2. {{ _['step2_title'][lang] }}</h3>
+            <p>{{ _['step2_desc'][lang]|safe }}</p>
+        </div>
+        <div class="feature-card" style="text-align:center">
+            <div class="feature-icon" style="margin:0 auto 1rem">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h3>3. {{ _['step3_title'][lang] }}</h3>
+            <p>{{ _['step3_desc'][lang]|safe }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="container" style="padding: 4rem 1rem">
+    <div class="section-title">
+        <h2>{{ _['features_title'][lang] }}</h2>
+        <p>{{ _['features_subtitle'][lang] }}</p>
+    </div>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+            </div>
+            <h3>{{ _['f1_title'][lang] }}</h3>
+            <p>{{ _['f1_desc'][lang]|safe }}</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <h3>{{ _['f2_title'][lang] }}</h3>
+            <p>{{ _['f2_desc'][lang] }}</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <h3>{{ _['f3_title'][lang] }}</h3>
+            <p>{{ _['f3_desc'][lang] }}</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <h3>{{ _['f4_title'][lang] }}</h3>
+            <p>{{ _['f4_desc'][lang] }}</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h3>{{ _['f5_title'][lang] }}</h3>
+            <p>{{ _['f5_desc'][lang] }}</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+            </div>
+            <h3>{{ _['f6_title'][lang] }}</h3>
+            <p>{{ _['f6_desc'][lang] }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Use cases -->
+<section class="container" style="padding: 4rem 1rem">
+    <div class="section-title">
+        <h2>{% if lang == 'fr' %}Pour qui ?{% else %}Who is it for?{% endif %}</h2>
+        <p>{% if lang == 'fr' %}Développeurs, designers, agences — reprenez le contrôle de vos formulaires.{% else %}Developers, designers, agencies — take back control of your forms.{% endif %}</p>
+    </div>
+    <div class="grid grid-3" style="max-width:900px;margin:0 auto">
+        <div class="feature-card" style="background:linear-gradient(180deg,var(--bg-card) 0%,transparent 100%)">
+            <div style="font-size:2rem;margin-bottom:0.75rem">🖥️</div>
+            <h3>{% if lang == 'fr' %}Développeur web{% else %}Web developer{% endif %}</h3>
+            <p>{% if lang == 'fr' %}Plus besoin de backend pour vos formulaires de contact. Collez l'URL, configurez les notifications, c'est prêt.{% else %}No backend needed for your contact forms. Paste the URL, set up notifications, done.{% endif %}</p>
+        </div>
+        <div class="feature-card" style="background:linear-gradient(180deg,var(--bg-card) 0%,transparent 100%)">
+            <div style="font-size:2rem;margin-bottom:0.75rem">🎨</div>
+            <h3>{% if lang == 'fr' %}Designer / No-code{% else %}Designer / No-code{% endif %}</h3>
+            <p>{% if lang == 'fr' %}Landing page statique + formulaire fonctionnel sans toucher à un serveur. Idéal pour vos clients.{% else %}Static landing page + working form without touching a server. Perfect for your clients.{% endif %}</p>
+        </div>
+        <div class="feature-card" style="background:linear-gradient(180deg,var(--bg-card) 0%,transparent 100%)">
+            <div style="font-size:2rem;margin-bottom:0.75rem">🏢</div>
+            <h3>{% if lang == 'fr' %}Agence web{% else %}Web agency{% endif %}</h3>
+            <p>{% if lang == 'fr' %}Gérez les formulaires de tous vos clients depuis un seul dashboard. Plans multi-utilisateurs et marque blanche.{% else %}Manage all your clients' forms from a single dashboard. Multi-user plans and white label.{% endif %}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="container" style="padding: 4rem 1rem">
+    <div class="section-title">
+        <h2>{{ _['pricing_title'][lang] }}</h2>
+        <p>{{ _['pricing_subtitle'][lang] }}</p>
+    </div>
+    <div class="pricing-grid" style="max-width:960px">
+        <!-- Free -->
+        <div class="pricing-card">
+            <div class="pricing-name">{{ _['pricing_free'][lang] }}</div>
+            <div class="pricing-desc">{{ _['pricing_free_desc'][lang] }}</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">0 €</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 50 {{ _['pricing_feat_sub'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 1 {{ _['pricing_feat_forms'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_notif'][lang] }}: {{ _['pricing_feat_notif_email'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-cross" style="color:var(--text-muted)">—</span> {{ _['pricing_feat_spam'][lang] }}</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">{{ _['pricing_cta_free'][lang] }}</a>
+        </div>
+        <!-- Starter -->
+        <div class="pricing-card">
+            <div class="pricing-name">{{ _['pricing_starter'][lang] }}</div>
+            <div class="pricing-desc">{{ _['pricing_starter_desc'][lang] }}</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">8 €</span>
+                <span class="pricing-unit">{{ _['pricing_month'][lang] }}</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 500 {{ _['pricing_feat_sub'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 5 {{ _['pricing_feat_forms_plural'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_notif'][lang] }}: {{ _['pricing_feat_notif_email'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_spam'][lang] }}</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">{{ _['pricing_cta_starter'][lang] }}</a>
+        </div>
+        <!-- Pro (featured) -->
+        <div class="pricing-card featured">
+            <div class="pricing-badge">{{ _['pricing_popular'][lang] }}</div>
+            <div class="pricing-name">{{ _['pricing_pro'][lang] }}</div>
+            <div class="pricing-desc">{{ _['pricing_pro_desc'][lang] }}</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">19 €</span>
+                <span class="pricing-unit">{{ _['pricing_month'][lang] }}</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 2 000 {{ _['pricing_feat_sub'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 20 {{ _['pricing_feat_forms_plural'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_notif_multi'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_spam_pro'][lang] }}</div>
+            </div>
+            <a href="/login" class="btn btn-primary btn-block pricing-cta">{{ _['pricing_cta_pro'][lang] }}</a>
+        </div>
+        <!-- Business -->
+        <div class="pricing-card">
+            <div class="pricing-name">{{ _['pricing_business'][lang] }}</div>
+            <div class="pricing-desc">{{ _['pricing_business_desc'][lang] }}</div>
+            <div class="pricing-amount">
+                <span class="pricing-number">39 €</span>
+                <span class="pricing-unit">{{ _['pricing_month'][lang] }}</span>
+            </div>
+            <div class="pricing-features">
+                <div class="pricing-feature"><span class="pricing-check">✓</span> 10 000 {{ _['pricing_feat_sub'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_forms_plural'][lang] }}: {{ _['pricing_feat_unlimited'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_notif_all'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_domain'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_export'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_team'][lang] }}</div>
+                <div class="pricing-feature"><span class="pricing-check">✓</span> {{ _['pricing_feat_white'][lang] }}</div>
+            </div>
+            <a href="/login" class="btn btn-ghost btn-block pricing-cta">{{ _['pricing_cta_business'][lang] }}</a>
+        </div>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+        <a href="/pricing" class="text-sm" style="color:var(--text-secondary)">
+            {{ _['pricing_all_link'][lang] }}
+        </a>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="container" style="padding: 4rem 1rem 6rem">
+    <div style="background:linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);border:1px solid var(--border);border-radius:var(--radius-xl);padding:3rem 2rem;text-align:center;max-width:700px;margin:0 auto">
+        <h2 style="font-size:1.75rem;margin-bottom:0.75rem">{{ _['cta_title'][lang] }}</h2>
+        <p style="color:var(--text-secondary);margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto">
+            {{ _['cta_desc'][lang] }}
+        </p>
+        <div class="hero-actions">
+            <a href="/login" class="btn btn-primary btn-lg">{{ _['cta_primary'][lang] }}</a>
+            <a href="/pricing" class="btn btn-ghost btn-lg">{{ _['cta_secondary'][lang] }}</a>
+        </div>
+    </div>
+</section>
+
+<!-- Lang toggle (subtle, bottom-right) -->
+<div class="lang-toggle" style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:50">
+    {% if lang == 'fr' %}
+    <a href="?lang=en" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:0.375rem 0.75rem">{{ _['lang_toggle'][lang] }}</a>
+    {% else %}
+    <a href="?lang=fr" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:0.375rem 0.75rem">{{ _['lang_toggle'][lang] }}</a>
+    {% endif %}
+</div>
+
+{% endblock %}

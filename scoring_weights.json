@@ -1,0 +1,11 @@
+{
+  "urgency": 0.10,
+  "willingness_to_pay": 0.15,
+  "competition": 0.10,
+  "distribution_difficulty": 0.10,
+  "feasibility": 0.15,
+  "time_to_first_dollar": 0.10,
+  "gross_margin": 0.10,
+  "legal_risk": 0.10,
+  "data_availability": 0.10
+}
