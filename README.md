@@ -15,16 +15,9 @@
 
 ## 📸 Demo
 
-```
-$ curl -X POST https://formbackend.example.com/api/f/demo-form \
-  -d "name=Jane Doe" \
-  -d "email=jane@example.com" \
-  -d "message=Hey, this is incredibly easy!"
+![FormBackend API Demo](.github/images/formbackend-demo.gif)
 
-{"success":true,"message":"Formulaire soumis avec succès","id":"a1b2c3d4"}
-```
-
-> Replace this text with your GIF once recorded — see [Creating the demo GIF](#-creating-the-demo-gif) below.
+*A 10-second walkthrough: deploy → create form → submit data → receive confirmation.*
 
 ---
 
