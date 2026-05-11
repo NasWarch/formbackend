@@ -25,6 +25,12 @@ class Form(Base):
     slug = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     submission_count = Column(Integer, default=0)
+
+    # Anti-spam per-form configuration
+    spam_protection_enabled = Column(Boolean, default=True)
+    turnstile_enabled = Column(Boolean, default=True)
+    spam_scoring_enabled = Column(Boolean, default=True)
+
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

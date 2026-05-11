@@ -34,6 +34,18 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = "http://localhost:8000"
 
+    # Anti-spam — Cloudflare Turnstile
+    TURNSTILE_SECRET_KEY: str = "1x0000000000000000000000000000000AA"  # test key always passes in dev
+    TURNSTILE_SITE_KEY: str = "1x0000000000000000000000000000000AA"
+
+    # Anti-spam — behavioral scoring
+    SPAM_SCORING_ENABLED: bool = True
+    SPAM_SCORE_THRESHOLD: int = 5  # max score before rejection
+    SPAM_RATE_LIMIT_WINDOW: int = 60  # seconds
+    SPAM_RATE_LIMIT_MAX: int = 10  # max submissions per window per fingerprint
+    SPAM_IP_RATE_LIMIT: str = "20/minute"  # per-IP limit on public endpoint
+    SPAM_FINGERPRINT_RATE_LIMIT: str = "10/minute"  # per (IP+UA) fingerprint
+
     # Analytics
     GOACCESS_ENABLED: bool = True
 

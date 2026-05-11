@@ -399,9 +399,27 @@ def get_form_embed(form_id: str, request: Request, db: Session = Depends(get_db)
         return HTMLResponse('<p class="text-red-400">Formulaire introuvable</p>')
 
     base_url = request.base_url
-    embed_code = f'<form action="{base_url}api/f/{form["endpoint"]}" method="POST">\n  <input type="text" name="name" placeholder="Votre nom" required>\n  <input type="email" name="email" placeholder="Votre email" required>\n  <textarea name="message" placeholder="Votre message"></textarea>\n  <button type="submit">Envoyer</button>\n</form>'
 
-    return HTMLResponse(f"""
+    turnstile_enabled = form.get("turnstile_enabled", True)
+    turnstile_site_key = settings.TURNSTILE_SITE_KEY
+
+    turnstile_html = ""
+    if turnstile_enabled:
+        turnstile_html = f"""\
+  <div class="cf-turnstile" data-sitekey="{turnstile_site_key}"></div>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>"""
+
+    embed_code = f'''<form action="{base_url}api/f/{form["endpoint"]}" method="POST">
+  <input type="text" name="name" placeholder="Votre nom" required>
+  <input type="email" name="email" placeholder="Votre email" required>
+  <textarea name="message" placeholder="Votre message"></textarea>
+  <!-- Anti-spam honeypot: ne pas modifier -->
+  <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+{turnstile_html}
+  <button type="submit">Envoyer</button>
+</form>'''
+
+    return HTMLResponse(f"""\
     <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="embed-modal">
         <div class="bg-gray-800 rounded-2xl p-6 max-w-lg w-full mx-4 border border-gray-700 shadow-2xl">
             <div class="flex items-center justify-between mb-4">
@@ -410,6 +428,14 @@ def get_form_embed(form_id: str, request: Request, db: Session = Depends(get_db)
             </div>
             <p class="text-gray-400 text-sm mb-3">Copiez ce code HTML dans votre site statique :</p>
             <pre class="bg-gray-900 rounded-xl p-4 text-xs text-gray-300 overflow-x-auto font-mono border border-gray-700"><code>{embed_code}</code></pre>
+            <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-900/30 text-indigo-300 border border-indigo-700/30">
+                    ✅ Turnstile {"activé" if turnstile_enabled else "désactivé"}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-700/30 text-gray-300">
+                    🛡️ Honeypot actif
+                </span>
+            </div>
             <button class="mt-4 w-full py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors"
                     onclick="navigator.clipboard.writeText(`{embed_code}`); this.textContent='Copié !'; setTimeout(()=>this.textContent='Copier le code', 2000)">
                 Copier le code
@@ -484,6 +510,9 @@ async def create_form(request: Request, db: Session = Depends(get_db)):
         "endpoint": endpoint,
         "submissions": 0,
         "submissions_data": [],
+        "spam_protection_enabled": True,
+        "turnstile_enabled": True,
+        "spam_scoring_enabled": True,
     })
 
     return HTMLResponse(
@@ -512,14 +541,18 @@ def logout():
 
 
 @app.post("/api/f/{endpoint}")
-@limiter.limit(settings.RATE_LIMIT)
+@limiter.limit(settings.SPAM_IP_RATE_LIMIT)
 async def submit_form(endpoint: str, request: Request):
     """Endpoint public de soumission de formulaire.
-    Accepte form-urlencoded, valide, stocke et retourne une confirmation.
+    Accepte form-urlencoded, valide via anti-spam pipeline, stocke et retourne une confirmation.
     """
+    import uuid
     from fastapi.responses import JSONResponse
     import json
     from datetime import datetime, timezone
+    import time as time_module
+
+    request_start = time_module.time()
 
     # Trouver le formulaire par endpoint
     form = None
@@ -539,20 +572,63 @@ async def submit_form(endpoint: str, request: Request):
             status_code=404,
         )
 
-    # Honeypot anti-spam (champ caché _gotcha)
+    # Anti-spam: disabled at form level → skip entirely
+    spam_enabled = form.get("spam_protection_enabled", True)
+    turnstile_enabled = form.get("turnstile_enabled", True) if spam_enabled else False
+    scoring_enabled = form.get("spam_scoring_enabled", True) if spam_enabled else False
+
+    # Parse form data
     raw = await request.form()
     raw_dict = dict(raw)
-    if raw_dict.pop("_gotcha", None):
-        # Bot détecté — on fait semblant d'accepter
-        return JSONResponse({"success": True, "message": "Formulaire soumis avec succès"})
 
     client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "")
+    submit_duration_ms = int((time_module.time() - request_start) * 1000)
+
+    if spam_enabled:
+        from app.core.antispam import evaluate_submission
+
+        turnstile_token = raw_dict.pop("cf-turnstile-response", None)
+
+        verdict = await evaluate_submission(
+            form_data=raw_dict,
+            ip=client_ip,
+            user_agent=user_agent,
+            request_body=raw_dict,
+            turnstile_token=turnstile_token,
+            submit_duration_ms=submit_duration_ms,
+            spam_scoring_enabled=scoring_enabled,
+            turnstile_enabled=turnstile_enabled,
+        )
+
+        if not verdict["allowed"]:
+            # Log spam rejection to form metadata
+            if "spam_log" not in form:
+                form["spam_log"] = []
+            form["spam_log"].append({
+                "reason": verdict["reason"],
+                "score": verdict["score"],
+                "signals": verdict["signals"][:3],
+                "ip": client_ip,
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            })
+            # Keep only last 100 entries
+            form["spam_log"] = form["spam_log"][-100:]
+
+            return JSONResponse(
+                {"success": False, "error": "Submission rejected by anti-spam filters"},
+                status_code=429,
+            )
+    else:
+        # Even without anti-spam, still strip _gotcha
+        raw_dict.pop("_gotcha", None)
 
     # Stocker la soumission
     submission = {
         "id": str(uuid.uuid4())[:8],
         "data": {k: v for k, v in raw_dict.items() if not k.startswith("_")},
         "ip": client_ip,
+        "ua": user_agent[:120] if user_agent else "",
         "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
     }
     form["submissions_data"].append(submission)

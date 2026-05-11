@@ -1,226 +1,337 @@
-# Monetization Lab — MVP Readiness Plan
+<div align="center">
+  <h1>FormBackend API</h1>
+  <p><strong>Open-core self-hosted form backend. Deploy in 10 seconds.</strong></p>
+  <p>Stop writing backend code for your HTML forms. One endpoint URL, submissions arrive in your dashboard, notifications on your channel.</p>
 
-> Proposé par TARZ, le 2026-05-07.
-> Contexte : serveur ARM64 (aarch64), 4GB RAM, 10GB libre, Ubuntu 24.04.
-> Infra existante : Docker, nginx (port 80 → tinystatus), PostgreSQL 15 + Redis 8.2 (Docker).
-
----
-
-## 1. Stack Technique
-
-| Couche | Choix | Justification |
-|---|---|---|
-| **Backend** | Python 3.11 + FastAPI | Déjà installé, excellent support async, compatible ARM64, écosystème Stripe mature. Pas de build native coûteux. |
-| **Frontend** | HTMX + Jinja2 templates (FastAPI serve) | Aucun build step, pas de bundle JS, livré directement. Alternative future : Svelte 5 si besoin d'interactivité complexe. |
-| **Base de données** | PostgreSQL 15 (existant via Docker) | Il tourne déjà sur l'hôte. Créer une DB `monetization` dans la même instance. |
-| **Cache / Sessions** | Redis 8.2 (existant via Docker) | Déjà disponible. Utiliser pour : sessions utilisateur, rate limiting, file d'attente webhooks Stripe. |
-| **ORM / Migrations** | SQLAlchemy 2.0 + Alembic | Standard FastAPI, migrations versionnées. |
-| **Auth** | JWT (access + refresh) + magic links | Pas de gestion de mot de passe côté serveur. Stripe Customer Portal pour les infos de paiement. |
-| **Déploiement** | Docker Compose (un conteneur backend) + nginx reverse proxy | Docker est déjà installé. Un seul conteneur à build → footprint mémoire minimal. |
-| **CI** | Aucun pour le MVP — déploiement manuel via rsync + docker compose up -d | Trop tôt pour GitHub Actions. Ajouter quand le repo est sur GitHub. |
-
-### Pourquoi pas d'autres stacks
-
-- **Node/Express** : viable mais FastAPI a un meilleur écosystème Stripe + gestion async native.
-- **Go/Rust** : overkill pour un MVP, coût de build/déploiement trop élevé.
-- **Next.js** : nécessite Node runtime + build step, mémoire trop serrée (4GB RAM, 1.6GB disponible).
-- **SQLite** : pas de connexions concurrentes fiables pour un SaaS, même en MVP.
+  <p>
+    <a href="#-quick-start"><img src="https://img.shields.io/badge/Try_in_1_minute-%238B5CF6?style=for-the-badge" alt="Try in 1 minute"></a>
+    <a href="https://github.com/NasWarch/formbackend"><img src="https://img.shields.io/github/stars/NasWarch/formbackend?style=for-the-badge&logo=github" alt="GitHub stars"></a>
+    <a href="https://github.com/NasWarch/formbackend/actions"><img src="https://img.shields.io/github/actions/workflow/status/NasWarch/formbackend/ci.yml?style=for-the-badge&logo=githubactions&label=build" alt="Build"></a>
+    <a href="https://hub.docker.com/r/naswarch/formbackend"><img src="https://img.shields.io/docker/pulls/naswarch/formbackend?style=for-the-badge&logo=docker" alt="Docker pulls"></a>
+  </p>
+</div>
 
 ---
 
-## 2. Structure du Répertoire
+## 📸 Demo
 
 ```
-/root/monetization-lab/
-├── docker-compose.yml          # Services : backend, nginx (si standalone)
-├── .env.example                 # Template de config
-├── .gitignore
-├── Makefile                     # Raccourcis : make dev, make migrate, make deploy
-│
-├── backend/
-│   ├── Dockerfile               # Multi-stage, image ~200MB
-│   ├── requirements.txt         # pin: fastapi, uvicorn, sqlalchemy, httpx, stripe, ...
-│   ├── alembic.ini
-│   ├── alembic/
-│   │   ├── env.py
-│   │   └── versions/           # Migrations auto-générées
-│   └── app/
-│       ├── __init__.py
-│       ├── main.py              # App FastAPI, lifespan events
-│       ├── core/
-│       │   ├── __init__.py
-│       │   ├── config.py        # Pydantic Settings (variables d'env)
-│       │   ├── database.py      # SQLAlchemy engine + sessionmaker
-│       │   ├── security.py      # JWT utils, password hashing
-│       │   └── redis.py         # Redis client
-│       ├── models/
-│       │   ├── __init__.py
-│       │   ├── user.py
-│       │   └── subscription.py  # Plans, features, status
-│       ├── schemas/
-│       │   ├── __init__.py
-│       │   ├── auth.py
-│       │   └── billing.py
-│       ├── api/
-│       │   ├── __init__.py
-│       │   ├── deps.py          # Dépendances : get_current_user, get_db
-│       │   └── routes/
-│       │       ├── __init__.py
-│       │       ├── auth.py      # /auth/magic-link, /auth/verify, /auth/refresh
-│       │       ├── users.py     # /users/me, /users/me/subscription
-│       │       ├── billing.py   # /billing/portal (stripe redirect) — PAS IMPLÉMENTÉ ENCORE
-│       │       └── webhooks.py  # Stripe webhook endpoint — PAS IMPLÉMENTÉ ENCORE
-│       └── templates/           # Jinja2 : pages landing, dashboard, pricing
-│           ├── base.html
-│           ├── index.html
-│           ├── dashboard.html
-│           ├── pricing.html
-│           └── login.html
-│
-├── nginx/
-│   └── monetization-lab.conf.example  # Configuration nginx pour le sous-domaine
-│
-└── scripts/
-    ├── deploy.sh                # Rsync + docker compose up -d
-    ├── seed.py                  # Données de test (plans, admin user)
-    └── backup-db.sh             # pg_dump vers backup dir
+$ curl -X POST https://formbackend.example.com/api/f/demo-form \
+  -d "name=Jane Doe" \
+  -d "email=jane@example.com" \
+  -d "message=Hey, this is incredibly easy!"
+
+{"success":true,"message":"Formulaire soumis avec succès","id":"a1b2c3d4"}
 ```
 
-### Décisions architecturales clefs
-
-- **Monorepo single-container backend** : Le frontend est servi par FastAPI (templates). Pas de séparation backend/frontend build → zéro complexité pour le MVP.
-- **Alembic** : Migrations versionnées dès le jour 1. Impossible de faire du `Base.metadata.create_all()` en prod.
-- **Pydantic Settings** : Toute la config (DB URL, Stripe keys, JWT secret) via variables d'environnement. `.env` jamais commité.
-- **Pas d'async SQLAlchemy en MVP** : Sync SQLAlchemy + ThreadPoolExecutor. Asynchrone si besoin de perf plus tard — le gain en complexité ne vaut pas le coût au début.
+> Replace this text with your GIF once recorded — see [Creating the demo GIF](#-creating-the-demo-gif) below.
 
 ---
 
-## 3. Déploiement
+## 🚀 Quick Start
 
-### Architecture finale
+**1. Pull & run with Docker**
+
+```bash
+docker run -d -p 8000:8000 \
+  -e DATABASE_URL=postgresql://user:pass@localhost:5432/formbackend \
+  -e REDIS_URL=redis://localhost:6379/0 \
+  -e JWT_SECRET=change-me-to-a-random-secret \
+  -e SMTP_HOST=your-smtp-host \
+  -e SMTP_USER=your-smtp-user \
+  -e SMTP_PASS=your-smtp-pass \
+  --name formbackend \
+  ghcr.io/naswarch/formbackend:latest
+```
+
+**2. Create your first form**
+
+```bash
+# Open http://localhost:8000 in your browser
+# Sign up with your email (magic link — no password)
+# Click "Create form", name it "Contact"
+# Copy the endpoint URL
+```
+
+**3. Point your HTML form to it**
+
+```html
+<form action="http://localhost:8000/api/f/your-endpoint-slug" method="POST">
+  <input type="text" name="name" placeholder="Your name" required>
+  <input type="email" name="email" placeholder="Your email" required>
+  <textarea name="message" placeholder="Your message"></textarea>
+  <button type="submit">Send</button>
+</form>
+```
+
+**4. Done.** Submissions appear in your dashboard. Configure email/Slack/Discord notifications in settings.
+
+---
+
+## ✨ Features
+
+| Feature | Free | Starter (8€) | Pro (19€) | Business (39€) |
+|---------|------|-------------|-----------|----------------|
+| Submissions/month | 50 | 500 | 2,000 | 10,000 |
+| Forms | 1 | 5 | 20 | Unlimited |
+| REST API endpoint | ✅ | ✅ | ✅ | ✅ |
+| Dashboard | ✅ | ✅ | ✅ | ✅ |
+| Email notifications | — | ✅ | ✅ | ✅ |
+| Slack / Discord / Webhook | — | — | ✅ | ✅ |
+| SMS notifications | — | — | — | ✅ |
+| Anti-spam (honeypot) | ✅ | ✅ | ✅ | ✅ |
+| Anti-spam (reCAPTCHA) | — | — | ✅ | ✅ |
+| Custom CORS | — | ✅ | ✅ | ✅ |
+| Custom domain | — | — | — | ✅ |
+| White label | — | — | — | ✅ |
+| CSV / JSON export | ✅ | ✅ | ✅ | ✅ |
+| Data retention | 30 days | 90 days | 365 days | Forever |
+| Team members | — | — | — | Up to 5 |
+| API access | — | ✅ | ✅ | ✅ |
+| Zapier / Make integrations | — | — | — | ✅ |
+
+---
+
+## 📊 Why FormBackend?
+
+| vs | Formspree | Web3Forms | Formcarry | **FormBackend** |
+|---|---|---|---|---|
+| Free tier | 50 sub/mo | 100 sub/mo | 100 sub/mo | **50 sub/mo** |
+| Entry plan | $8/mo — 50 sub | $9/mo — 1,000 sub | $12/mo — 1,000 sub | **8€/mo — 500 sub** |
+| Mid plan | $18/mo — 500 sub | — | — | **19€/mo — 2,000 sub** |
+| Top plan | $55/mo — 2,500 sub | $29/mo — 5,000 sub | $24/mo — 3,000 sub | **39€/mo — 10,000 sub** |
+| Self-hostable | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary | **✅ Open-core** |
+| Anti-spam advanced | ❌ | ❌ | ❌ | **✅ reCAPTCHA + honeypot** |
+| Multi-channel notif | ❌ | ❌ | ❌ | **✅ Slack, Discord, SMS** |
+| Custom domain | $12/mo extra | ❌ | ❌ | **✅ Included Business** |
+| White label | ❌ | ❌ | ❌ | **✅ Included Business** |
+| Pricing in EUR | ❌ ($) | ❌ ($) | ❌ ($) | **✅** |
+
+**The short version:** 10× more submissions than Formspree at the same price, self-hostable, and more features at every tier.
+
+---
+
+## 🐳 Self-hosting
+
+### docker-compose.yml
+
+```yaml
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: formbackend-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: formbackend
+      POSTGRES_USER: formbackend
+      POSTGRES_PASSWORD: change-me
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formbackend"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: formbackend-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/naswarch/formbackend:latest
+    build: ./backend
+    container_name: formbackend-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: postgresql://formbackend:change-me@postgres:5432/formbackend
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: generate-a-random-64-char-string
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: "noreply@yourdomain.com"
+      CORS_ORIGINS: "*"
+      RATE_LIMIT: "10/minute"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### Run it
+
+```bash
+docker compose up -d
+# Open http://localhost:8000
+```
+
+### Upgrade
+
+```bash
+docker compose pull backend
+docker compose up -d
+```
+
+### Configuration
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
+| `REDIS_URL` | ✅ | — | Redis connection string |
+| `JWT_SECRET` | ✅ | — | 64+ char random string for JWT signing |
+| `SMTP_HOST` | ❌ | — | SMTP server for email notifications |
+| `SMTP_PORT` | ❌ | 587 | SMTP port |
+| `SMTP_USER` | ❌ | — | SMTP username |
+| `SMTP_PASS` | ❌ | — | SMTP password |
+| `SMTP_FROM` | ❌ | noreply@localhost | From address for notification emails |
+| `CORS_ORIGINS` | ❌ | * | Comma-separated allowed origins |
+| `RATE_LIMIT` | ❌ | 10/minute | Rate limit for form submission endpoint |
+| `STRIPE_SECRET_KEY` | ❌ | — | Stripe secret key (for paid plans) |
+| `STRIPE_WEBHOOK_SECRET` | ❌ | — | Stripe webhook signing secret |
+
+---
+
+## 💰 Pricing
+
+| Plan | Price | Submissions | Forms | Best for |
+|------|-------|-------------|-------|----------|
+| **Free** | **0€** | 50/mo | 1 | Testing & prototypes |
+| **Starter** | **8€/mo** | 500/mo | 5 | Solo devs & blogs |
+| **Pro** | **19€/mo** | 2,000/mo | 20 | SMEs & agencies |
+| **Business** | **39€/mo** | 10,000/mo | Unlimited | Scaling SaaS & teams |
+
+> **Self-hosted users** get all Pro features for free + unlimited submissions. Business features (custom domain, white label, team) are included at the hosted Business tier.
+
+---
+
+## 🧩 API
+
+### Submit form data
+
+```http
+POST /api/f/{endpoint}
+Content-Type: application/x-www-form-urlencoded
+
+name=John&email=john@example.com&message=Hello
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Formulaire soumis avec succès",
+  "id": "a1b2c3d4"
+}
+```
+
+### Anti-spam
+
+Add a hidden `_gotcha` field to your form — if a bot fills it, the submission is silently accepted but not stored:
+
+```html
+<input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+```
+
+---
+
+## 🏗 Architecture
 
 ```
-Internet → nginx:443 (SSL) → backend:8000 (FastAPI/Uvicorn)
-                                  ├── PostgreSQL:5432
-                                  └── Redis:6379
+┌─────────────┐     ┌────────────┐     ┌──────────────┐
+│   Browser    │────▶│  FastAPI   │────▶│  PostgreSQL  │
+│  (HTML form) │     │  (uvicorn) │     │   (storage)  │
+└─────────────┘     │            │     └──────────────┘
+                    │            │     ┌──────────────┐
+┌─────────────┐     │ Dashboard  │────▶│    Redis     │
+│   Your app   │────▶│  (HTMX)   │     │ (sessions /  │
+│ (JavaScript) │     └────────────┘     │  rate limit) │
+└─────────────┘                        └──────────────┘
+                                               │
+                                        ┌──────┴──────┐
+                                        │  Notifications│
+                                        │ Email / Slack│
+                                        │ Discord / SMS│
+                                        └─────────────┘
 ```
 
-### Chemin de déploiement (MVP)
-
-1. **Configuration SSL** : Installer certbot, obtenir un certificat Let's Encrypt pour le sous-domaine.
-2. **Sous-domaine** : Créer un enregistrement DNS A pointant vers l'IP du serveur.
-3. **nginx** : Nouveau bloc server dans `/etc/nginx/sites-available/monetization-lab`, proxy pass vers le conteneur backend.
-4. **Docker Compose** : Lancer le service backend. La DB et Redis sont déjà sur l'hôte — le backend s'y connecte via `host.docker.internal` ou l'IP du bridge Docker.
-5. **Déploiement** : `rsync -avz --delete ./ backend-user@host:~/monetization-lab/ && ssh host 'cd ~/monetization-lab && docker compose up -d --build'`
-
-**Pas de CI/CD pour le MVP.** Le script `scripts/deploy.sh` suffit. CI plus tard quand le projet est sur GitHub avec des tests.
-
-### Considérations ARM64
-
-- Toutes les images Docker doivent être multi-arch ou ARM64 natives.
-- `python:3.11-slim-bookworm` existe en ARM64.
-- Stripe SDK Python fonctionne sans build natif → aucune dépendance C problématique.
+- **Backend:** Python 3.11 + FastAPI (async-first, production-grade)
+- **Frontend:** HTMX + Jinja2 (zero build step, served directly)
+- **Database:** PostgreSQL 15 (JSONB for submission data)
+- **Cache:** Redis 8 (rate limiting, session store, webhook queue)
+- **Auth:** Magic-link based JWT (no passwords to store)
 
 ---
 
-## 4. Analytics
+## 🛠 Development
 
-**Recommandation : Umami (self-hosted).**
+```bash
+# Clone
+git clone https://github.com/NasWarch/formbackend.git
+cd formbackend
 
-| Outil | Pourquoi |
-|---|---|
-| **Umami** | Image Docker légère (ARM64), zéro dépendance externe, respecte le RGPD, pas de cookie banner. |
-| **Plausible** | Plus cher en ressources, image officielle pas toujours dispo en ARM64. |
-| **Google Analytics** | Trop lourd, pas de self-hosting, obligations RGPD. |
+# Set up
+cp .env.example .env
+# Edit .env with your database credentials
 
-Alternative plus légère : **Logs nginx + GoAccess** (analyse statique des logs) — zéro infrastructure supplémentaire.
+# Run locally (requires PostgreSQL + Redis)
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-Pour le MVP, ne pas déployer Umami tout de suite. Commencer par les logs nginx + GoAccess, ajouter Umami quand le trafic le justifie.
+# Or with Docker
+docker compose up -d
+```
 
----
+### Run tests
 
-## 5. Auth & Payment Constraints
-
-### Auth
-
-- **Magic links** par email (POST `/auth/magic-link` → envoie un token par email → GET `/auth/verify?token=...` → JWT)
-- **JWT** : access_token (15min) + refresh_token (7 jours, stocké en Redis)
-- **Pas de mot de passe** : le mail est le seul identifiant. Simplifie la sécurité (pas de hash, pas de reset password).
-- Rate limiting sur l'endpoint magic link (Redis + slowapi) : max 1 requête par email toutes les 60 secondes.
-
-### Payment Constraints (documentation uniquement — PAS D'IMPLÉMENTATION)
-
-Quand le moment viendra d'implémenter les paiements :
-
-| Contrainte | Décision |
-|---|---|
-| **Processor** | Stripe (écosystème le plus mature, Customer Portal gère mises à jour CB). |
-| **Pricing model** | Plans récurrents (Stripe Products + Prices). Pas de paiement one-shot pour le MVP. |
-| **Webhooks** | Endpoint Stripe dédié, vérification HMAC. Queue Redis en cas d'échec. |
-| **Customer Portal** | Rediriger l'utilisateur vers Stripe pour gérer son abonnement. Pas de UI de paiement custom. |
-| **Monnaie** | EUR uniquement. Stripe convertit automatiquement pour les cartes étrangères. |
-| **Trials** | Période d'essai optionnelle (Stripe trial_period_days). Stocker une date d'expiration locale. |
-| **Feature gating** | Vérifier le statut abonnement à chaque requête côté backend. Modèle : `Subscription.status` (active / trialing / past_due / canceled). |
-| **Taxes** | Stripe Tax ou calcul manuel selon le pays. Stripe Tax recommandé pour la simplicité. |
-
-### Security
-
-- **Rate limiting** sur tous les endpoints publics (SlowAPI + Redis)
-- **CORS** : whitelist stricte (le domaine uniquement)
-- **Headers** : helmet-style (X-Content-Type-Options, X-Frame-Options, CSP)
-- **Stripe webhooks** : vérifier la signature HMAC côté serveur. Renvoyer 200 rapidement, traiter le webhook de manière asynchrone.
+```bash
+cd backend
+pip install -r requirements.txt
+pip install pytest httpx
+pytest tests/ -v
+```
 
 ---
 
-## 6. Human-Review Gates
+## 🤝 Contributing
 
-| Gate | Condition | Qui |
-|---|---|---|
-| **Squelette du repo** | Structure validée, dépendances fixées | Toi (Nassim) — README relu et approuvé |
-| **Route auth** | Magic link fonctionnel en local | Toi — test manuel |
-| **Page pricing** | Design + contenu validé | Toi — pas de paiement derrière |
-| **Staging deploy** | Premier déploiement sur sous-domaine de staging | Toi — accès vérifié |
-| **Implémentation Stripe** | Architecture webhook + Customer Portal définie | Bloquant : revue de sécurité avant tout code de paiement en prod |
-| **Passage en prod** | Tests manuels complets, backup DB automatisé | Toi + revue sécurité paiement |
-| **Facturation réelle** | Stripe en mode live, pas en test | Toi + validation que les webhooks arrivent correctement |
+PRs welcome! Check the [open issues](https://github.com/NasWarch/formbackend/issues) for things to work on.
 
-### Règles strictes
-
-1. **Aucun code Stripe en `main` sans revue.** Le branch `payment/` est isolé. Une PR est créée, et seulement toi (Nassim) la merge.
-2. **Aucune clé Stripe live dans `.env`.** Uniquement les clés de test en dev. Les clés live sont injectées via une variable d'environnement sécurisée sur le serveur (ou un fichier `.env.prod` jamais commité).
-3. **Backup DB obligatoire avant le premier webhook Stripe en prod.** Via `scripts/backup-db.sh` + cron.
-4. **Rate limiting activé avant toute exposition publique.** Le premier lancement en dev n'en a pas besoin, mais le staging doit l'avoir.
+**Stack:** Python 3.11, FastAPI, SQLAlchemy, HTMX, Docker.
 
 ---
 
-## 7. Launch Assets (Templates Réutilisables)
+## 📄 License
 
-Le dossier contient des templates de lancement prêts à l'emploi, adaptables à tout produit :
-
-| Fichier | Contenu | Utilisation |
-|---------|---------|-------------|
-| `landing-page-structure.md` | Structure 7 sections + variations par objectif + tests A/B prévus | Avant d'écrire HTML — cadrer chaque section |
-| `copy-checklist.md` | Checklist copy par type de contenu + anti-patterns + SEO | Avant toute rédaction de contenu public |
-| `analytics-events-plan.md` | Événements par étape du cycle (acquisition → rétention) + implémentation technique | Dès la première mise en ligne — logs nginx en phase 1 |
-| `outreach-channels-plan.md` | Canaux d'acquisition budget €0 + planning 4 semaines + cold email | Dès le lancement — calendrier des actions |
-| `validation-experiments.md` | 8 expériences pré/post-lancement + tableau de décision | Avant d'écrire la première ligne de code |
-| `pricing-test-plan.md` | Structure de plans + tests Van Westendorp + A/B pricing | Design uniquement — pas d'implémentation Stripe |
-| `launch-governance.md` | Règles strictes : pas de paid ads, contrôles financiers, security gates, GDPR | Applicable immédiatement — document de référence |
-
-### Règle clé : **No Paid Ads Before Human Approval**
-Aucune dépense publicitaire sans validation explicite de Nassim. Les conditions d'approbation (PMF, unit economics, tracking) sont détaillées dans `launch-governance.md`.
+[AGPL-3.0](LICENSE) — Free to use, modify, and self-host. Commercial use requires a paid license for hosted deployments with >50 monthly submissions.
 
 ---
 
-## 8. Prochaines ÉTapes (Ordre d'Exécution)
-
-1. [ ] **Read this plan** — Nassim valide ou ajuste
-2. [ ] **Create skeleton** — `backend/app/` structure, `docker-compose.yml`, `requirements.txt`, `Makefile`
-3. [ ] **Dockerfile** — Multi-stage Python 3.11-slim, ~200MB final image
-4. [ ] **Config & DB** — `core/config.py` (Pydantic Settings), `core/database.py` (SQLAlchemy + Alembic init)
-5. [ ] **Health endpoint** — `GET /health` → `{"status": "ok", "db": true, "redis": true}`
-6. [ ] **Auth routes** — Magic link generation + JWT verify
-7. [ ] **Page templates** — landing, login, dashboard with HTMX interactivity
-8. [ ] **Nginx config** — Setup nginx + certbot for the domain
-9. [ ] **Stripe integration design doc** — avant d'écrire une seule ligne de code de paiement
-10. [ ] **Payment implementation** — dans une branche dédiée, PAS AVANT validation du design doc
+<div align="center">
+  <p>Built with ❤️ for developers who hate reinventing the wheel.</p>
+  <p>
+    <a href="https://github.com/NasWarch/formbackend">GitHub</a> ·
+    <a href="#-quick-start">Quick Start</a> ·
+    <a href="#-pricing">Pricing</a> ·
+    <a href="https://github.com/NasWarch/formbackend/issues">Issues</a>
+  </p>
+</div>
